@@ -49,6 +49,47 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
+// Configure Azure AD authentication strategy
+passport.use(
+  "azuread",
+  new OIDCStrategy(
+    {
+      identityMetadata: `https://login.microsoftonline.com/${AZURE_AD_TENANT_ID}/.well-known/openid-configuration`,
+      clientID: AZURE_AD_CLIENT_ID,
+      responseType: "code id_token",
+      responseMode: "form_post",
+      redirectUrl: "http://your-app/azuread/callback", // Customize the callback URL
+      passReqToCallback: true,
+    },
+    (
+      req,
+      iss,
+      sub,
+      profile,
+      jwtClaims,
+      accessToken,
+      refreshToken,
+      params,
+      done
+    ) => {
+      // Use the profile information for authentication
+      // Call done() to continue with authentication
+    }
+  )
+);
+// Azure AD login route
+app.get("/login/azuread", passport.authenticate("azuread"));
+
+// Azure AD callback route
+app.post(
+  "/azuread/callback",
+  passport.authenticate("azuread", { failureRedirect: "/login" }),
+  (req, res) => {
+    // Successful authentication, redirect to a secure route or respond with tokens
+    res.json({ message: "Logged in with Azure AD." });
+  }
+);
+
 // Register a new user
 app.post(
   "/register",
