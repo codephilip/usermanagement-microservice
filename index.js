@@ -136,7 +136,7 @@ function verifyTwoFactor(user, code) {
   return verified;
 }
 
-// Middleware for Role-Based Access Control
+// Middleware for Role-Based Access Control (RBAC)
 function authorizeRoles(roles) {
   return (req, res, next) => {
     // Check if user has the required role
@@ -147,10 +147,56 @@ function authorizeRoles(roles) {
   };
 }
 
-// Protected route accessible only to admin users
-app.get("/admin", authenticateToken, authorizeRoles(["admin"]), (req, res) => {
-  res.json({ message: "Welcome, admin!" });
-});
+// Middleware for Attribute-Based Access Control (ABAC)
+function authorizeAttributes(attributes) {
+  return (req, res, next) => {
+    // Implement logic to check if user's attributes match the required attributes
+    const userAttributes = getUserAttributes(req.user.username); // Function to fetch user's attributes
+    const hasRequiredAttributes = userAttributes.some((attribute) =>
+      attributes.includes(attribute)
+    );
+    if (!hasRequiredAttributes) {
+      return res.status(403).json({ message: "Access denied." });
+    }
+    next();
+  };
+}
+
+// Protected route accessible based on user's attributes
+app.get(
+  "/restricted",
+  authenticateToken,
+  authorizeAttributes(["special_access"]),
+  (req, res) => {
+    res.json({ message: "Welcome to the restricted area!" });
+  }
+);
+
+// Dynamic Role Assignment
+app.post(
+  "/assign-role/:username/:role",
+  authenticateToken,
+  authorizeRoles(["admin"]),
+  async (req, res) => {
+    const { username, role } = req.params;
+    try {
+      const user = await User.findOne({ username });
+      if (!user) {
+        return res.status(404).json({ message: "User not found." });
+      }
+      user.role = role; // Assign the specified role
+      await user.save();
+      res.json({ message: `Role ${role} assigned to user ${username}.` });
+    } catch (err) {
+      res.status(500).json({ message: "Error assigning role." });
+    }
+  }
+);
+
+// Placeholder for Centralized Identity and Access Management (IAM)
+// Implement a separate IAM microservice to manage user identities, roles, and permissions
+
+// ... (other routes and code)
 
 // Middleware for JWT authentication
 function authenticateToken(req, res, next) {
