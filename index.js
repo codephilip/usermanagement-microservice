@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
@@ -8,14 +9,16 @@ const rateLimit = require("express-rate-limit");
 const xss = require("xss");
 const { body, validationResult } = require("express-validator");
 const speakeasy = require("speakeasy");
-
+const passport = require("passport");
+const OAuth2Strategy = require("passport-oauth2");
+const OIDCStrategy = require("passport-azure-ad").OIDCStrategy;
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SECRET_KEY = "your-secret-key";
 
 // Connect to MongoDB securely
 mongoose
-  .connect("mongodb://localhost:27017/user-management", {
+  .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
@@ -48,47 +51,6 @@ const limiter = rateLimit({
 });
 
 app.use(limiter);
-
-// Configure Azure AD authentication strategy
-passport.use(
-  "azuread",
-  new OIDCStrategy(
-    {
-      identityMetadata: `https://login.microsoftonline.com/${AZURE_AD_TENANT_ID}/.well-known/openid-configuration`,
-      clientID: AZURE_AD_CLIENT_ID,
-      responseType: "code id_token",
-      responseMode: "form_post",
-      redirectUrl: "http://your-app/azuread/callback", // Customize the callback URL
-      passReqToCallback: true,
-    },
-    (
-      req,
-      iss,
-      sub,
-      profile,
-      jwtClaims,
-      accessToken,
-      refreshToken,
-      params,
-      done
-    ) => {
-      // Use the profile information for authentication
-      // Call done() to continue with authentication
-    }
-  )
-);
-// Azure AD login route
-app.get("/login/azuread", passport.authenticate("azuread"));
-
-// Azure AD callback route
-app.post(
-  "/azuread/callback",
-  passport.authenticate("azuread", { failureRedirect: "/login" }),
-  (req, res) => {
-    // Successful authentication, redirect to a secure route or respond with tokens
-    res.json({ message: "Logged in with Azure AD." });
-  }
-);
 
 // Register a new user
 app.post(
@@ -123,6 +85,7 @@ app.post(
       await newUser.save();
       res.status(201).json({ message: "User registered successfully." });
     } catch (err) {
+      console.error(err); // Log the error
       res.status(500).json({ message: "Error registering user." });
     }
   }
@@ -130,7 +93,7 @@ app.post(
 
 // User login with 2FA
 app.post("/login", async (req, res) => {
-  const { username, password, twoFactorCode } = req.body;
+  const { username, password } = req.body;
 
   // Sanitize inputs
   const sanitizedUsername = xss(username);
@@ -147,10 +110,10 @@ app.post("/login", async (req, res) => {
   }
 
   // Implement 2FA verification
-  const isTwoFactorValid = verifyTwoFactor(user, twoFactorCode);
-  if (!isTwoFactorValid) {
-    return res.status(401).json({ message: "Invalid two-factor code." });
-  }
+  // const isTwoFactorValid = verifyTwoFactor(user, twoFactorCode);
+  // if (!isTwoFactorValid) {
+  //   return res.status(401).json({ message: "Invalid two-factor code." });
+  // }
 
   // Generate access token and refresh token
   const token = jwt.sign({ username: sanitizedUsername }, SECRET_KEY, {
@@ -165,17 +128,28 @@ app.post("/login", async (req, res) => {
   res.json({ token, refreshToken });
 });
 
-// Verify Two-Factor Authentication Code
-function verifyTwoFactor(user, code) {
-  // Use speakeasy library to verify the two-factor code
-  const verified = speakeasy.totp.verify({
-    secret: user.twoFactorSecret, // Store user's two-factor secret in the database
-    encoding: "base32",
-    token: code,
-  });
+// Add a new route to enable and configure 2FA for a user
+app.post("/enable-2fa", authenticateToken, async (req, res) => {
+  const { twoFactorSecret } = req.body;
 
-  return verified;
-}
+  // Store the twoFactorSecret securely in the user's account
+  req.user.twoFactorSecret = twoFactorSecret;
+  await req.user.save();
+
+  res.json({ message: "2FA is enabled and configured." });
+});
+
+// Verify Two-Factor Authentication Code
+// function verifyTwoFactor(user, code) {
+//   // Use speakeasy library to verify the two-factor code
+//   const verified = speakeasy.totp.verify({
+//     secret: user.twoFactorSecret, // Store user's two-factor secret in the database
+//     encoding: "base32",
+//     token: code,
+//   });
+
+//   return verified;
+// }
 
 // Middleware for Role-Based Access Control (RBAC)
 function authorizeRoles(roles) {
@@ -236,6 +210,47 @@ app.post(
 
 // Placeholder for Centralized Identity and Access Management (IAM)
 // Implement a separate IAM microservice to manage user identities, roles, and permissions
+
+// Configure Azure AD authentication strategy
+// passport.use(
+//   "azuread",
+//   new OIDCStrategy(
+//     {
+//       identityMetadata: `https://login.microsoftonline.com/${AZURE_AD_TENANT_ID}/.well-known/openid-configuration`,
+//       clientID: AZURE_AD_CLIENT_ID,
+//       responseType: "code id_token",
+//       responseMode: "form_post",
+//       redirectUrl: "http://your-app/azuread/callback", // Customize the callback URL
+//       passReqToCallback: true,
+//     },
+//     (
+//       req,
+//       iss,
+//       sub,
+//       profile,
+//       jwtClaims,
+//       accessToken,
+//       refreshToken,
+//       params,
+//       done
+//     ) => {
+//       // Use the profile information for authentication
+//       // Call done() to continue with authentication
+//     }
+//   )
+// );
+// // Azure AD login route
+// app.get("/login/azuread", passport.authenticate("azuread"));
+
+// // Azure AD callback route
+// app.post(
+//   "/azuread/callback",
+//   passport.authenticate("azuread", { failureRedirect: "/login" }),
+//   (req, res) => {
+//     // Successful authentication, redirect to a secure route or respond with tokens
+//     res.json({ message: "Logged in with Azure AD." });
+//   }
+// );
 
 // ... (other routes and code)
 
