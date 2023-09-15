@@ -1,7 +1,9 @@
 const { body, validationResult } = require("express-validator");
 const User = require("../models/userModel.js");
 const { generateRefreshToken } = require("../utils/tokenUtils.js");
-
+const xss = require("xss"); // Import the xss library
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 async function registerUser(req, res) {
   const { username, password } = req.body;
 
@@ -45,9 +47,13 @@ async function loginUser(req, res) {
     return res.status(401).json({ message: "Invalid credentials." });
   }
 
-  const token = jwt.sign({ username: sanitizedUsername }, SECRET_KEY, {
-    expiresIn: "1h",
-  });
+  const token = jwt.sign(
+    { username: sanitizedUsername },
+    process.env.SECRET_KEY,
+    {
+      expiresIn: "1h",
+    }
+  );
   const refreshToken = generateRefreshToken();
 
   user.refreshTokens.push(refreshToken);

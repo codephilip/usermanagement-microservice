@@ -8,10 +8,9 @@ const authRoutes = require("./routes/authRoutes.js");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const SECRET_KEY = "your-secret-key"; // Set your secret key here
-const MONGO_URI = process.env.MONGO_URI; // Set your MongoDB URI here
-const bodyParser = require("body-parser");
+const MONGO_URI = process.env.MONGO_URI;
 
+// Connect to MongoDB
 mongoose
   .connect(MONGO_URI, {
     useNewUrlParser: true,
@@ -22,23 +21,22 @@ mongoose
   })
   .catch((err) => {
     console.error("Error connecting to MongoDB:", err);
+    process.exit(1); // Terminate the application on database connection error
   });
-
-// Parse JSON bodies
-app.use(bodyParser.json());
-
-// Parse URL-encoded bodies (for forms)
-app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(cors());
 app.use(helmet());
-app.use(express.json());
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-});
-app.use(limiter);
+// Enable rate limiting
+// const limiter = rateLimit({
+//   windowMs: 15 * 60 * 1000,
+//   max: 100,
+// });
+// app.use(limiter);
+
+// Parse JSON and URL-encoded bodies
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use("/auth", authRoutes);
 

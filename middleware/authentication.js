@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/userModel.js");
+const { SECRET_KEY } = process.env; // Use the environment variable for the secret key
 
 authenticateToken = function (req, res, next) {
   const authHeader = req.headers.authorization;
