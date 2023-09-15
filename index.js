@@ -9,12 +9,9 @@ const rateLimit = require("express-rate-limit");
 const xss = require("xss");
 const { body, validationResult } = require("express-validator");
 const speakeasy = require("speakeasy");
-const passport = require("passport");
-const OAuth2Strategy = require("passport-oauth2");
-const OIDCStrategy = require("passport-azure-ad").OIDCStrategy;
 const app = express();
 const PORT = process.env.PORT || 3000;
-const SECRET_KEY = "your-secret-key";
+const SECRET_KEY = "your-secret-key"; // Replace with an environment variable
 
 // Connect to MongoDB securely
 mongoose
@@ -33,14 +30,15 @@ mongoose
 const userSchema = new mongoose.Schema({
   username: String,
   password: String,
-  refreshTokens: [String], // Store refresh tokens
-  role: String, // User role (e.g., 'user' or 'admin')
-  twoFactorSecret: String, // Store user's 2FA secret
+  refreshTokens: [String],
+  role: String,
+  twoFactorSecret: String,
 });
 
 const User = mongoose.model("User", userSchema);
 
-app.use(cors()); // Set up CORS to control cross-origin requests
+// Middleware
+app.use(cors()); // Enable CORS
 app.use(helmet()); // Enhance security with HTTP headers
 app.use(express.json()); // Parse JSON bodies
 
@@ -49,7 +47,6 @@ const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
 });
-
 app.use(limiter);
 
 // Register a new user
@@ -62,26 +59,26 @@ app.post(
   async (req, res) => {
     const { username, password } = req.body;
 
-    // Validate input
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res
-        .status(400)
-        .json({ message: "Invalid input.", errors: errors.array() });
-    }
-
-    // Sanitize inputs
-    const sanitizedUsername = xss(username);
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({
-      username: sanitizedUsername,
-      password: hashedPassword,
-      role: "user",
-    });
-
     try {
+      // Validate input
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res
+          .status(400)
+          .json({ message: "Invalid input.", errors: errors.array() });
+      }
+
+      // Sanitize inputs
+      const sanitizedUsername = xss(username);
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const newUser = new User({
+        username: sanitizedUsername,
+        password: hashedPassword,
+        role: "user",
+      });
+
       await newUser.save();
       res.status(201).json({ message: "User registered successfully." });
     } catch (err) {
@@ -95,205 +92,53 @@ app.post(
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
-  // Sanitize inputs
-  const sanitizedUsername = xss(username);
-
-  const user = await User.findOne({ username: sanitizedUsername });
-  if (!user) {
-    return res.status(404).json({ message: "User not found." });
-  }
-
-  // Validate password
-  const isPasswordValid = await bcrypt.compare(password, user.password);
-  if (!isPasswordValid) {
-    return res.status(401).json({ message: "Invalid credentials." });
-  }
-
-  // Implement 2FA verification
-  // const isTwoFactorValid = verifyTwoFactor(user, twoFactorCode);
-  // if (!isTwoFactorValid) {
-  //   return res.status(401).json({ message: "Invalid two-factor code." });
-  // }
-
-  // Generate access token and refresh token
-  const token = jwt.sign({ username: sanitizedUsername }, SECRET_KEY, {
-    expiresIn: "1h",
-  });
-  const refreshToken = generateRefreshToken();
-
-  // Save refresh token to user's account for future use
-  user.refreshTokens.push(refreshToken);
-  await user.save();
-
-  res.json({ token, refreshToken });
-});
-
-// Add a new route to enable and configure 2FA for a user
-app.post("/enable-2fa", authenticateToken, async (req, res) => {
-  const { twoFactorSecret } = req.body;
-
-  // Store the twoFactorSecret securely in the user's account
-  req.user.twoFactorSecret = twoFactorSecret;
-  await req.user.save();
-
-  res.json({ message: "2FA is enabled and configured." });
-});
-
-// Verify Two-Factor Authentication Code
-// function verifyTwoFactor(user, code) {
-//   // Use speakeasy library to verify the two-factor code
-//   const verified = speakeasy.totp.verify({
-//     secret: user.twoFactorSecret, // Store user's two-factor secret in the database
-//     encoding: "base32",
-//     token: code,
-//   });
-
-//   return verified;
-// }
-
-// Middleware for Role-Based Access Control (RBAC)
-function authorizeRoles(roles) {
-  return (req, res, next) => {
-    // Check if user has the required role
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ message: "Access denied." });
-    }
-    next();
-  };
-}
-
-// Middleware for Attribute-Based Access Control (ABAC)
-function authorizeAttributes(attributes) {
-  return (req, res, next) => {
-    // Implement logic to check if user's attributes match the required attributes
-    const userAttributes = getUserAttributes(req.user.username); // Function to fetch user's attributes
-    const hasRequiredAttributes = userAttributes.some((attribute) =>
-      attributes.includes(attribute)
-    );
-    if (!hasRequiredAttributes) {
-      return res.status(403).json({ message: "Access denied." });
-    }
-    next();
-  };
-}
-
-// Protected route accessible based on user's attributes
-app.get(
-  "/restricted",
-  authenticateToken,
-  authorizeAttributes(["special_access"]),
-  (req, res) => {
-    res.json({ message: "Welcome to the restricted area!" });
-  }
-);
-
-// Dynamic Role Assignment
-app.post(
-  "/assign-role/:username/:role",
-  authenticateToken,
-  authorizeRoles(["admin"]),
-  async (req, res) => {
-    const { username, role } = req.params;
-    try {
-      const user = await User.findOne({ username });
-      if (!user) {
-        return res.status(404).json({ message: "User not found." });
-      }
-      user.role = role; // Assign the specified role
-      await user.save();
-      res.json({ message: `Role ${role} assigned to user ${username}.` });
-    } catch (err) {
-      res.status(500).json({ message: "Error assigning role." });
-    }
-  }
-);
-
-// Placeholder for Centralized Identity and Access Management (IAM)
-// Implement a separate IAM microservice to manage user identities, roles, and permissions
-
-// Configure Azure AD authentication strategy
-// passport.use(
-//   "azuread",
-//   new OIDCStrategy(
-//     {
-//       identityMetadata: `https://login.microsoftonline.com/${AZURE_AD_TENANT_ID}/.well-known/openid-configuration`,
-//       clientID: AZURE_AD_CLIENT_ID,
-//       responseType: "code id_token",
-//       responseMode: "form_post",
-//       redirectUrl: "http://your-app/azuread/callback", // Customize the callback URL
-//       passReqToCallback: true,
-//     },
-//     (
-//       req,
-//       iss,
-//       sub,
-//       profile,
-//       jwtClaims,
-//       accessToken,
-//       refreshToken,
-//       params,
-//       done
-//     ) => {
-//       // Use the profile information for authentication
-//       // Call done() to continue with authentication
-//     }
-//   )
-// );
-// // Azure AD login route
-// app.get("/login/azuread", passport.authenticate("azuread"));
-
-// // Azure AD callback route
-// app.post(
-//   "/azuread/callback",
-//   passport.authenticate("azuread", { failureRedirect: "/login" }),
-//   (req, res) => {
-//     // Successful authentication, redirect to a secure route or respond with tokens
-//     res.json({ message: "Logged in with Azure AD." });
-//   }
-// );
-
-// ... (other routes and code)
-
-// Middleware for JWT authentication
-function authenticateToken(req, res, next) {
-  // Verify JWT token and attach user to request object
-  const authHeader = req.headers.authorization;
-  const token = authHeader && authHeader.split(" ")[1];
-
-  if (!token) {
-    return res.status(401).json({ message: "Access token is missing." });
-  }
-
-  jwt.verify(token, SECRET_KEY, (err, user) => {
-    if (err) {
-      return res.status(403).json({ message: "Access token is invalid." });
-    }
-    req.user = user;
-    next();
-  });
-}
-
-// Generate refresh token using speakeasy library
-function generateRefreshToken() {
-  const secret = speakeasy.generateSecret({ length: 20 }).base32;
-  return secret;
-}
-
-// Protected route: Retrieve user profile
-app.get("/profile", authenticateToken, async (req, res) => {
   try {
-    const user = await User.findOne({ username: req.user.username });
+    // Sanitize inputs
+    const sanitizedUsername = xss(username);
+
+    const user = await User.findOne({ username: sanitizedUsername });
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
-    const userProfile = { username: user.username, email: "user@example.com" };
-    res.json(userProfile);
+
+    // Validate password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Invalid credentials." });
+    }
+
+    // Implement 2FA verification
+    // const isTwoFactorValid = verifyTwoFactor(user, twoFactorCode);
+    // if (!isTwoFactorValid) {
+    //   return res.status(401).json({ message: "Invalid two-factor code." });
+    // }
+
+    // Generate access token and refresh token
+    const token = jwt.sign({ username: sanitizedUsername }, SECRET_KEY, {
+      expiresIn: "1h",
+    });
+    const refreshToken = generateRefreshToken();
+
+    // Save refresh token to user's account for future use
+    user.refreshTokens.push(refreshToken);
+    await user.save();
+
+    res.json({ token, refreshToken });
   } catch (err) {
-    res.status(500).json({ message: "Error fetching user profile." });
+    console.error(err); // Log the error
+    res.status(500).json({ message: "Error during login." });
   }
 });
+
+// Rest of your routes and middleware
 
 // Start the server
 app.listen(PORT, () => {
   console.log(`User Management Microservice is running on port ${PORT}`);
 });
+
+// Helper function to generate refresh tokens
+function generateRefreshToken() {
+  const secret = speakeasy.generateSecret({ length: 20 }).base32;
+  return secret;
+}
