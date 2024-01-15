@@ -22,6 +22,9 @@ async function registerUser(req, res) {
     // Hash the password securely
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    const userIdToInsert = req.body.userId;
+
+    // Check if the user already exists by userId before attempting to insert
     const existingUser = await User.findOne({ userId: userIdToInsert });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists." });
