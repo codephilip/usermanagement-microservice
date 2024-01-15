@@ -13,11 +13,11 @@ const PORT = process.env.PORT || 3000; // Define the port to listen on
 const MONGO_URI = process.env.MONGO_URI; // MongoDB connection URI
 
 // Connect to MongoDB database
-mongoose
-  .connect(MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+mongoose.connect(MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  dbName: "your-database-name", // Specify your actual database name here
+})
   .then(() => {
     console.log("Connected to MongoDB");
   })
