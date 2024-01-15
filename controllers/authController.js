@@ -4,27 +4,34 @@ const { generateRefreshToken } = require("../utils/tokenUtils.js");
 const xss = require("xss"); // Import the xss library
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+
+// Function to handle user registration
 async function registerUser(req, res) {
   const { username, password } = req.body;
 
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res
-      .status(400)
-      .json({ message: "Invalid input.", errors: errors.array() });
-  }
-
-  const sanitizedUsername = xss(username);
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const newUser = new User({
-    username: sanitizedUsername,
-    password: hashedPassword,
-    role: "user",
-  });
-
   try {
+    // Validate user input
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ message: "Invalid input.", errors: errors.array() });
+    }
+
+    // Sanitize the username
+    const sanitizedUsername = xss(username);
+
+    // Hash the password securely
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create a new user
+    const newUser = new User({
+      username: sanitizedUsername,
+      password: hashedPassword,
+      role: "user",
+    });
+
+    // Save the user to the database
     await newUser.save();
+
     res.status(201).json({ message: "User registered successfully." });
   } catch (err) {
     console.error(err);
@@ -32,43 +39,63 @@ async function registerUser(req, res) {
   }
 }
 
+// Function to handle user login
 async function loginUser(req, res) {
   const { username, password } = req.body;
 
-  const sanitizedUsername = xss(username);
+  try {
+    // Sanitize the username
+    const sanitizedUsername = xss(username);
 
-  const user = await User.findOne({ username: sanitizedUsername });
-  if (!user) {
-    return res.status(404).json({ message: "User not found." });
-  }
-
-  const isPasswordValid = await bcrypt.compare(password, user.password);
-  if (!isPasswordValid) {
-    return res.status(401).json({ message: "Invalid credentials." });
-  }
-
-  const token = jwt.sign(
-    { username: sanitizedUsername },
-    process.env.SECRET_KEY,
-    {
-      expiresIn: "1h",
+    // Find the user by username
+    const user = await User.findOne({ username: sanitizedUsername });
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
     }
-  );
-  const refreshToken = generateRefreshToken();
 
-  user.refreshTokens.push(refreshToken);
-  await user.save();
+    // Compare the provided password with the hashed password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Invalid credentials." });
+    }
 
-  res.json({ token, refreshToken });
+    // Generate a JWT token
+    const token = jwt.sign(
+      { username: sanitizedUsername },
+      process.env.SECRET_KEY,
+      {
+        expiresIn: "1h",
+      }
+    );
+
+    // Generate a refresh token
+    const refreshToken = generateRefreshToken();
+
+    // Store the refresh token with the user
+    user.refreshTokens.push(refreshToken);
+    await user.save();
+
+    res.json({ token, refreshToken });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error logging in." });
+  }
 }
 
+// Function to enable two-factor authentication (2FA)
 async function enableTwoFactorAuth(req, res) {
   const { twoFactorSecret } = req.body;
 
-  req.user.twoFactorSecret = twoFactorSecret;
-  await req.user.save();
+  try {
+    // Update the user's two-factor secret
+    req.user.twoFactorSecret = twoFactorSecret;
+    await req.user.save();
 
-  res.json({ message: "2FA is enabled and configured." });
+    res.json({ message: "2FA is enabled and configured." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error enabling 2FA." });
+  }
 }
 
 module.exports = {
