@@ -32,6 +32,8 @@ router.post("/register", registrationValidation, async (req, res, next) => {
 
 
 router.post("/login", authController.loginUser);
+// Route for validating tokens
+router.post('/validateToken', authController.validateToken);
 
 router.post(
   "/enable-2fa",
