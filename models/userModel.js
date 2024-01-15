@@ -1,7 +1,10 @@
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
-  username: String,
+  username: {
+    type: String,
+    unique: true, // Make the username field unique
+  },
   password: String,
   refreshTokens: [String],
   role: String,

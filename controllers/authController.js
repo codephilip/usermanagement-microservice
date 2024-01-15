@@ -7,7 +7,7 @@ const jwt = require("jsonwebtoken");
 
 // Function to handle user registration
 async function registerUser(req, res) {
-  const { username, password } = req.body;
+  const { username, password } = req.body; // Include userId in the request body
 
   try {
     // Validate user input
@@ -22,14 +22,11 @@ async function registerUser(req, res) {
     // Hash the password securely
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const userIdToInsert = req.body.userId;
-
     // Check if the user already exists by userId before attempting to insert
-    const existingUser = await User.findOne({ userId: userIdToInsert });
+    const existingUser = await User.findOne({ username: username }); // Use userId for checking
     if (existingUser) {
       return res.status(400).json({ message: "User already exists." });
     }
-    
 
     // Create a new user
     const newUser = new User({
@@ -47,6 +44,7 @@ async function registerUser(req, res) {
     res.status(500).json({ message: "Error registering user." });
   }
 }
+
 
 // Function to handle user login
 async function loginUser(req, res) {
