@@ -90,6 +90,32 @@ async function loginUser(req, res, next) {
   }
 }
 
+async function validateToken(req, res) {
+  // Extract the token from the request headers or other means
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+      return res.status(401).json({ message: "No token provided." });
+  }
+
+  try {
+      // Verify the token using the same secret used to sign the JWT
+      const decoded = verifyAccessToken(token);
+
+      if (!decoded) {
+          return res.status(401).json({ message: "Invalid or expired token." });
+      }
+
+      // Optionally, you can add additional checks here, e.g., checking user existence in DB
+
+      // If token is valid
+      res.json({ message: "Token is valid.", userId: decoded.userId });
+  } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Error verifying token." });
+  }
+}
+
 // Enable Two-Factor Authentication (2FA)
 async function enableTwoFactorAuth(req, res) {
   const { twoFactorSecret } = req.body;
@@ -110,4 +136,5 @@ module.exports = {
   registerUser,
   loginUser,
   enableTwoFactorAuth,
+  validateToken
 };

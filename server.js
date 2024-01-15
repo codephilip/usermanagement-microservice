@@ -9,7 +9,7 @@ const authRoutes = require("./routes/authRoutes.js"); // Authentication routes
 
 // Create an Express application
 const app = express();
-const PORT = process.env.PORT || 3000; // Define the port to listen on
+const PORT = process.env.PORT || 3001; // Define the port to listen on
 const MONGO_URI = process.env.MONGO_URI; // MongoDB connection URI
 
 // Connect to MongoDB database
