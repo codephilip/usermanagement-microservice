@@ -14,16 +14,22 @@ const registrationValidation = [
   body("password").isLength({ min: 8 }),
 ];
 
-router.post("/register", registrationValidation, (req, res, next) => {
+router.post("/register", registrationValidation, async (req, res, next) => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  // If validation passes, call the controller method
-  authController.registerUser(req, res, next);
+  try {
+    // If validation passes, call the controller method
+    await authController.registerUser(req, res, next);
+  } catch (err) {
+    console.error("Error registering user:", err);
+    res.status(500).json({ message: "Error registering user." });
+  }
 });
+
 
 router.post("/login", authController.loginUser);
 
