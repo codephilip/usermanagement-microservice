@@ -16,7 +16,7 @@ const MONGO_URI = process.env.MONGO_URI; // MongoDB connection URI
 mongoose.connect(MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  dbName: "your-database-name", // Specify your actual database name here
+  dbName: "clist3", // Specify your actual database name here
 })
   .then(() => {
     console.log("Connected to MongoDB");
@@ -43,6 +43,10 @@ app.use(express.urlencoded({ extended: true }));
 
 // Define routes for authentication
 app.use("/auth", authRoutes);
+
+app.get("/test", (req, res) => {
+  res.send("Server is up and running!");
+});
 
 // Start the Express server and listen on the specified port
 app.listen(PORT, () => {
