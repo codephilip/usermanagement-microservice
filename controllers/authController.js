@@ -17,14 +17,31 @@ const generateAccessToken = (user) => {
   });
 }
 
-// Function to verify JWT access tokens
+//
+//Function to verify JWT access tokens
 const verifyAccessToken = (token) => {
   try {
-    return jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    return { valid: true, decoded };
   } catch (error) {
-    return null;
+    console.error("Token verification error:", error);
+    return { valid: false, error };
   }
-}
+};
+
+// const verifyAccessToken = (token) => {
+//   try {
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//     return { valid: true, decoded };
+//   } catch (error) {
+//     if (error.name !== 'TokenExpiredError') {
+//       console.error("Token verification error:", error);
+//     }
+//     return { valid: false, error };
+//   }
+// };
+
+
 
 // User registration
 async function registerUser(req, res, next) {
@@ -76,9 +93,11 @@ async function loginUser(req, res, next) {
 
     // Generate a JWT token
     const token = generateAccessToken(user);
+    console.log('token is ',token)
 
     // Generate a refresh token
     const refreshToken = speakeasy.generateSecret().base32;
+    console.log('refresh token is ',refreshToken)
 
     user.refreshTokens.push(refreshToken);
     await user.save();
@@ -90,32 +109,26 @@ async function loginUser(req, res, next) {
   }
 }
 
-async function validateToken(req, res) {
-  // Extract the token from the request headers or other means
+
+const validateToken = (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
 
   if (!token) {
-      return res.status(401).json({ message: "No token provided." });
+    return res.status(401).json({ message: "No token provided." });
   }
 
-  try {
-      // Verify the token using the same secret used to sign the JWT
-      const decoded = verifyAccessToken(token);
-
-      if (!decoded) {
-          return res.status(401).json({ message: "Invalid or expired token." });
-      }
-
-      // Optionally, you can add additional checks here, e.g., checking user existence in DB
-
-      // If token is valid
-      res.json({ message: "Token is valid.", userId: decoded.userId });
-  } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: "Error verifying token." });
+  const result = verifyAccessToken(token);
+  if (!result.valid) {
+    if (result.error.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: "Token expired." });
+    } else {
+      return res.status(401).json({ message: "Invalid token." });
+    }
   }
-}
 
+  // Token is valid
+  res.json({ message: "Token is valid.", userId: result.decoded.userId });
+};
 // Enable Two-Factor Authentication (2FA)
 async function enableTwoFactorAuth(req, res) {
   const { twoFactorSecret } = req.body;
