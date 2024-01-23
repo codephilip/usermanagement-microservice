@@ -17,30 +17,18 @@ const generateAccessToken = (user) => {
   });
 }
 
-//
 //Function to verify JWT access tokens
 const verifyAccessToken = (token) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     return { valid: true, decoded };
   } catch (error) {
-    console.error("Token verification error:", error);
+    if (error.name !== 'TokenExpiredError') {
+      console.error("Token verification error:", error);
+    }
     return { valid: false, error };
   }
 };
-
-// const verifyAccessToken = (token) => {
-//   try {
-//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-//     return { valid: true, decoded };
-//   } catch (error) {
-//     if (error.name !== 'TokenExpiredError') {
-//       console.error("Token verification error:", error);
-//     }
-//     return { valid: false, error };
-//   }
-// };
-
 
 
 // User registration
