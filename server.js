@@ -10,7 +10,6 @@ const passport = require('passport');
 const dotenv = require('dotenv');
 dotenv.config();
 
-
 // Create an Express application
 const app = express();
 const PORT = process.env.PORT || 3001; // Define the port to listen on
@@ -30,6 +29,10 @@ mongoose.connect(MONGO_URI, {
     console.log("error"); // Uncomment to terminate the application on database connection error
   });
 
+// Parse JSON and URL-encoded request bodies
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 // Middleware setup
 app.use(cors()); // Enable Cross-Origin Resource Sharing
 app.use(helmet()); // Set security headers for the app
@@ -41,14 +44,10 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Parse JSON and URL-encoded request bodies
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
 // Define routes for authentication
 app.use("/auth", authRoutes);
 
-
+// Define a test route
 app.get("/test", (req, res) => {
   res.send("Server is up and running!");
 });
