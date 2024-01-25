@@ -6,6 +6,7 @@ const cors = require("cors"); // Cross-Origin Resource Sharing
 const helmet = require("helmet"); // Security headers middleware
 const rateLimit = require("express-rate-limit"); // Rate limiting for requests
 const authRoutes = require("./routes/authRoutes.js"); // Authentication routes
+const passport = require('passport');
 
 // Create an Express application
 const app = express();
@@ -43,6 +44,16 @@ app.use(express.urlencoded({ extended: true }));
 
 // Define routes for authentication
 app.use("/auth", authRoutes);
+
+app.get('/auth/google',
+  passport.authenticate('google', { scope: ['profile'] }));
+
+app.get('/auth/google/callback',
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  function (req, res) {
+    // Successful authentication, redirect home.
+    res.redirect('/');
+  });
 
 app.get("/test", (req, res) => {
   res.send("Server is up and running!");
