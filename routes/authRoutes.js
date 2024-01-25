@@ -8,7 +8,6 @@ const { body, validationResult } = require("express-validator");
 
 const router = express.Router();
 
-
 // Validation middleware for user registration
 const registrationValidation = [
   body("username").isLength({ min: 3 }).trim().escape(),
@@ -30,7 +29,6 @@ router.post("/register", registrationValidation, async (req, res, next) => {
     res.status(500).json({ message: "Error registering user." });
   }
 });
-
 
 router.post("/login", authController.loginUser);
 // Route for validating tokens
@@ -57,8 +55,6 @@ router.post(
   authenticateToken,
   authController.enableTwoFactorAuth
 );
-
-
 
 // ... (other routes)
 
