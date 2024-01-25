@@ -34,8 +34,6 @@ mongoose.connect(MONGO_URI, {
 app.use(cors()); // Enable Cross-Origin Resource Sharing
 app.use(helmet()); // Set security headers for the app
 
-
-
 // Enable rate limiting for incoming requests
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
