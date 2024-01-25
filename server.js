@@ -6,7 +6,6 @@ const cors = require("cors"); // Cross-Origin Resource Sharing
 const helmet = require("helmet"); // Security headers middleware
 const rateLimit = require("express-rate-limit"); // Rate limiting for requests
 const authRoutes = require("./routes/authRoutes.js"); // Authentication routes
-const passport = require('passport');
 const dotenv = require('dotenv');
 dotenv.config();
 
