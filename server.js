@@ -1,5 +1,5 @@
 // Import required modules and packages
-require("dotenv").config(); // Load environment variables from .env file
+
 const express = require("express");
 const mongoose = require("mongoose"); // MongoDB driver
 const cors = require("cors"); // Cross-Origin Resource Sharing
@@ -7,8 +7,10 @@ const helmet = require("helmet"); // Security headers middleware
 const rateLimit = require("express-rate-limit"); // Rate limiting for requests
 const authRoutes = require("./routes/authRoutes.js"); // Authentication routes
 const passport = require('passport');
+const dotenv = require('dotenv');
+dotenv.config();
 
-require('./middleware/oauth.js');
+
 // Create an Express application
 const app = express();
 const PORT = process.env.PORT || 3001; // Define the port to listen on
@@ -32,6 +34,8 @@ mongoose.connect(MONGO_URI, {
 app.use(cors()); // Enable Cross-Origin Resource Sharing
 app.use(helmet()); // Set security headers for the app
 
+
+
 // Enable rate limiting for incoming requests
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -46,20 +50,6 @@ app.use(express.urlencoded({ extended: true }));
 // Define routes for authentication
 app.use("/auth", authRoutes);
 
-app.get('/auth/google',
-  passport.authenticate('google', { scope: ['profile'] }));
-
-app.get('/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login' }),
-  function (req, res) {
-    // Successful authentication, redirect home.
-    res.redirect('/');
-  });
-
-app.get('/auth/protected', (req, res) => {
-  console.log('google success.')
-  res.send('You are authenticated!');
-});
 
 app.get("/test", (req, res) => {
   res.send("Server is up and running!");

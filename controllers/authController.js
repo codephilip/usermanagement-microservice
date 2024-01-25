@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const speakeasy = require("speakeasy"); // For 2FA
 const { validationResult } = require("express-validator");
+
 const User = require("../models/userModel");
 
 // Function to hash passwords
@@ -29,7 +30,6 @@ const verifyAccessToken = (token) => {
     return { valid: false, error };
   }
 };
-
 
 // User registration
 async function registerUser(req, res, next) {
@@ -81,11 +81,11 @@ async function loginUser(req, res, next) {
 
     // Generate a JWT token
     const token = generateAccessToken(user);
-    console.log('token is ',token)
+    console.log('token is ', token)
 
     // Generate a refresh token
     const refreshToken = speakeasy.generateSecret().base32;
-    console.log('refresh token is ',refreshToken)
+    console.log('refresh token is ', refreshToken)
 
     user.refreshTokens.push(refreshToken);
     await user.save();
@@ -113,10 +113,11 @@ const validateToken = (req, res) => {
       return res.status(401).json({ message: "Invalid token." });
     }
   }
-
   // Token is valid
   res.json({ message: "Token is valid.", userId: result.decoded.userId });
 };
+
+
 // Enable Two-Factor Authentication (2FA)
 async function enableTwoFactorAuth(req, res) {
   const { twoFactorSecret } = req.body;
