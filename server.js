@@ -8,6 +8,7 @@ const rateLimit = require("express-rate-limit"); // Rate limiting for requests
 const authRoutes = require("./routes/authRoutes.js"); // Authentication routes
 const passport = require('passport');
 
+require('./middleware/oauth.js');
 // Create an Express application
 const app = express();
 const PORT = process.env.PORT || 3001; // Define the port to listen on
@@ -54,6 +55,11 @@ app.get('/auth/google/callback',
     // Successful authentication, redirect home.
     res.redirect('/');
   });
+
+app.get('/auth/protected', (req, res) => {
+  console.log('google success.')
+  res.send('You are authenticated!');
+});
 
 app.get("/test", (req, res) => {
   res.send("Server is up and running!");
