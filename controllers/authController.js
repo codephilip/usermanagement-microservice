@@ -34,7 +34,8 @@ async function registerUser(req, res) {
 
 async function loginUser(req, res) {
   const { username, password } = req.body;
-
+  console.log("attempting to login");
+  console.log(username, password);
   const sanitizedUsername = xss(username);
 
   const user = await User.findOne({ username: sanitizedUsername });
