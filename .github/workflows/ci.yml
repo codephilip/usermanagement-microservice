@@ -13,7 +13,6 @@ jobs:
         with:
           node-version: "20"
       - run: npm install
-      - run: npm run build # if you have a build step
       - run: npx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
