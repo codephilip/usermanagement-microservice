@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  # worflow_dispatch: (try this instead of push)
   push:
     branches:
       - feature/semantic-release
@@ -22,7 +23,7 @@ jobs:
           node-version: "20"
 
       - run: npm install
-
+      - run: npm run start
       - run: npx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
