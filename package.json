@@ -34,7 +34,7 @@
     }
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.0.0"
   },
   "author": "PG",
   "license": "ISC",
