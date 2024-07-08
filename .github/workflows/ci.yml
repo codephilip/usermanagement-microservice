@@ -23,7 +23,7 @@ jobs:
           node-version: "20"
 
       - run: npm install
-      - run: npm run start
+      - run: npm run build
       - run: npx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
