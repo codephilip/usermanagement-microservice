@@ -1,0 +1,63 @@
+# This is the name of the GitHub Actions workflow.
+name: ci
+
+# This section defines the events that will trigger the workflow.
+on:
+  push: # This workflow will run whenever there is a push to the repository.
+
+# The jobs section defines all the jobs that will run as part of this workflow.
+jobs:
+  # First job to run: lint-format
+  lint-format:
+    runs-on: ubuntu-latest # This job will run on the latest version of Ubuntu.
+    steps: # Steps are the individual tasks that will be run in this job.
+      - uses: actions/checkout@v2 # Check out the repository code so the workflow can access it.
+
+      - name: Use Node.js
+        uses: actions/setup-node@v1 # Set up Node.js environment.
+        with:
+          node-version: "20" # Specify the version of Node.js to use.
+
+      - run: npm install # Install npm dependencies.
+
+      - name: Run Prettier
+        run: npm run format # Run Prettier to format the code.
+
+      - name: Run ESLint
+        run: npm run lint # Run ESLint to lint the code.
+
+  # Second job to run: build
+  build:
+    runs-on: ubuntu-latest # This job will also run on the latest version of Ubuntu.
+    needs: lint-format # This job will only run after the lint-format job completes successfully.
+    steps:
+      - uses: actions/checkout@v2 # Check out the repository code.
+
+      - name: Use Node.js
+        uses: actions/setup-node@v1 # Set up Node.js environment.
+        with:
+          node-version: "20" # Specify the version of Node.js to use.
+
+      - run: npm install # Install npm dependencies.
+
+      - run: npm run build:css # Run the build script for CSS.
+      - run: npm run build:js # Run the build script for JavaScript.
+
+  # Third job to run: release
+  release:
+    permissions: # Permissions needed for the job to create releases and manage repository content.
+      contents: write
+      issues: write
+      pull-requests: write
+      packages: write
+    runs-on: ubuntu-latest # This job will also run on the latest version of Ubuntu.
+    steps:
+      - uses: actions/checkout@v2 # Check out the repository code.
+      - name: Use Node.js
+        uses: actions/setup-node@v1 # Set up Node.js environment.
+        with:
+          node-version: "20" # Specify the version of Node.js to use.
+      - run: npm install # Install npm dependencies.
+      - run: npx semantic-release # Run semantic-release to automate versioning and package publishing.
+        env:
+          GITHUB_TOKEN: ${{ secrets.Philip_Semantic_Release }} # Use a GitHub token stored in secrets for authentication.

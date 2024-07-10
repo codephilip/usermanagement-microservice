@@ -68,11 +68,33 @@ async function registerUser(req, res, next) {
 // User login
 async function loginUser(req, res, next) {
   const { username, password } = req.body;
+<<<<<<< HEAD
 
   try {
     const user = await User.findOne({ username });
     if (!user) {
       return res.status(404).json({ message: "User not found." });
+=======
+  console.log("attempting to login");
+  console.log(username, password);
+  const sanitizedUsername = xss(username);
+
+  const user = await User.findOne({ username: sanitizedUsername });
+  if (!user) {
+    return res.status(404).json({ message: "User not found." });
+  }
+
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+  if (!isPasswordValid) {
+    return res.status(401).json({ message: "Invalid credentials." });
+  }
+
+  const token = jwt.sign(
+    { username: sanitizedUsername },
+    process.env.SECRET_KEY,
+    {
+      expiresIn: "1h",
+>>>>>>> feature/semantic-release
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);

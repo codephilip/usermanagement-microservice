@@ -9,6 +9,8 @@ pids
 logs
 results
 
+package-lock.json
+
 # Debug logs
 *.log
 *.swp
