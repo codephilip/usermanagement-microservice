@@ -60,4 +60,4 @@ jobs:
       - run: npm install # Install npm dependencies.
       - run: npx semantic-release # Run semantic-release to automate versioning and package publishing.
         env:
-          GITHUB_TOKEN: ${{ secrets.Philip_Semantic_Release }} # Use a GitHub token stored in secrets for authentication.
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }} # Use a GitHub token stored in secrets for authentication.
