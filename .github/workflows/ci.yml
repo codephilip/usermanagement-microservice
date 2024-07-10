@@ -3,6 +3,7 @@ name: ci
 
 # This section defines the events that will trigger the workflow.
 on:
+  #other methods available.
   push: # This workflow will run whenever there is a push to the repository.
 
 # The jobs section defines all the jobs that will run as part of this workflow.
