@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/codephilip/usermanagement-microservice/compare/v1.0.0...v1.0.1) (2024-07-10)
+
+
+### Bug Fixes
+
+* model ([0f8a515](https://github.com/codephilip/usermanagement-microservice/commit/0f8a515048e36dad238432c8ba12201c989e0bb8))
+
 # 1.0.0 (2024-07-10)
 
 
