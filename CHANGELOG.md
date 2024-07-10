@@ -22,6 +22,23 @@
 
 * basic setup ([551a701](https://github.com/codephilip/usermanagement-microservice/commit/551a701ffd6149dca61c57cba19396f3747cea87))
 * replace token ([cdf9d79](https://github.com/codephilip/usermanagement-microservice/commit/cdf9d79c1aaf6b3ab69e90a80962b6fe3077cbf7))
+* update v. due to fatal tag error ([459c8cf](https://github.com/codephilip/usermanagement-microservice/commit/459c8cf75aa717f26e10aa262608398a4c77256d))
+
+
+### Features
+
+* 2FA,RBAC ([b72764d](https://github.com/codephilip/usermanagement-microservice/commit/b72764d35fbcb8826c27e4392012c0df654c56d7))
+* ABAC, Dynamic Role Assignment ([21b9c42](https://github.com/codephilip/usermanagement-microservice/commit/21b9c4203fa138e03053c3e3f161848caed94347))
+* add semantic-release to ci ([5dd110c](https://github.com/codephilip/usermanagement-microservice/commit/5dd110c71e5d27d87478855049fb4860994b4dfc))
+* azure AD integration ([3bd7f1d](https://github.com/codephilip/usermanagement-microservice/commit/3bd7f1d104585145635abbc77d55ef7eafd675d5))
+
+# 1.0.0 (2024-07-10)
+
+
+### Bug Fixes
+
+* basic setup ([551a701](https://github.com/codephilip/usermanagement-microservice/commit/551a701ffd6149dca61c57cba19396f3747cea87))
+* replace token ([cdf9d79](https://github.com/codephilip/usermanagement-microservice/commit/cdf9d79c1aaf6b3ab69e90a80962b6fe3077cbf7))
 
 
 ### Features
