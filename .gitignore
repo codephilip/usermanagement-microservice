@@ -9,6 +9,7 @@ pids
 logs
 results
 
+#package-lock
 package-lock.json
 
 # Debug logs
