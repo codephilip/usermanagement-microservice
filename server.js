@@ -1,10 +1,10 @@
-require("dotenv").config();
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-const helmet = require("helmet");
-const rateLimit = require("express-rate-limit");
-const authRoutes = require("./routes/authRoutes.js");
+require('dotenv').config();
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const authRoutes = require('./routes/authRoutes.js');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,10 +17,10 @@ mongoose
     useUnifiedTopology: true,
   })
   .then(() => {
-    console.log("Connected to MongoDB");
+    console.log('Connected to MongoDB');
   })
   .catch((err) => {
-    console.error("Error connecting to MongoDB:", err);
+    console.error('Error connecting to MongoDB:', err);
     process.exit(1); // Terminate the application on database connection error
   });
 
@@ -38,7 +38,7 @@ app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/auth", authRoutes);
+app.use('/auth', authRoutes);
 
 app.listen(PORT, () => {
   console.log(`User Management Microservice is running on port ${PORT}`);
