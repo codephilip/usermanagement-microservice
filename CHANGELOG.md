@@ -1,3 +1,10 @@
+# [1.0.0-feature.2](https://github.com/codephilip/usermanagement-microservice/compare/v1.0.0-feature.1...v1.0.0-feature.2) (2024-07-15)
+
+
+### Bug Fixes
+
+* server setup ([c978237](https://github.com/codephilip/usermanagement-microservice/commit/c9782378e7a16475520cebd4858dd04c5b4d69c9))
+
 # 1.0.0-feature.1 (2024-07-15)
 
 
