@@ -1,4 +1,4 @@
-const speakeasy = require("speakeasy");
+const speakeasy = require('speakeasy');
 
 function generateRefreshToken() {
   const secret = speakeasy.generateSecret({ length: 20 }).base32;

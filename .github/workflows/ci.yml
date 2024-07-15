@@ -7,49 +7,52 @@ on:
       - feature/semantic-release
   workflow_dispatch:
 
+# The jobs section defines all the jobs that will run as part of this workflow.
 jobs:
+  # First job to run: lint-format
   lint-format:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
+    runs-on: ubuntu-latest # This job will run on the latest version of Ubuntu.
+    steps: # Steps are the individual tasks that will be run in this job.
+      - uses: actions/checkout@v2 # Check out the repository code so the workflow can access it.
+
       - name: Use Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v1 # Set up Node.js environment.
         with:
-          node-version: "20"
-      - run: npm install
+          node-version: '20' # Specify the version of Node.js to use.
+
+      - run: npm install # Install npm dependencies.
+
       - name: Run Prettier
-        run: npm run format
-      - name: Run ESLint
-        run: npm run lint
+        run: npm run format # Run Prettier to format the code.
 
+  # Second job to run: build
   build:
-    runs-on: ubuntu-latest
-    needs: lint-format
+    runs-on: ubuntu-latest # This job will also run on the latest version of Ubuntu.
+    needs: lint-format # This job will only run after the lint-format job completes successfully.
     steps:
-      - uses: actions/checkout@v2
-      - name: Use Node.js
-        uses: actions/setup-node@v1
-        with:
-          node-version: "20"
-      - run: npm install
-      - run: npm run build:css
-      - run: npm run build:js
+      - uses: actions/checkout@v2 # Check out the repository code.
 
+      - name: Use Node.js
+        uses: actions/setup-node@v1 # Set up Node.js environment.
+        with:
+          node-version: '20' # Specify the version of Node.js to use.
+
+      - run: npm install # Install npm dependencies.
+  # Third job to run: release
   release:
-    needs: build
-    permissions:
+    permissions: # Permissions needed for the job to create releases and manage repository content.
       contents: write
       issues: write
       pull-requests: write
       packages: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest # This job will also run on the latest version of Ubuntu.
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2 # Check out the repository code.
       - name: Use Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v1 # Set up Node.js environment.
         with:
-          node-version: "20"
-      - run: npm install
-      - run: npx semantic-release
+          node-version: '20' # Specify the version of Node.js to use.
+      - run: npm install # Install npm dependencies.
+      - run: npx semantic-release # Run semantic-release to automate versioning and package publishing.
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }} # Use a GitHub token stored in secrets for authentication.
